@@ -1,1 +1,1 @@
-# successor-feature-for-rl-transfer
+# Transfer Learning for Constrained Reinforcement Learning
