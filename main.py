@@ -14,9 +14,7 @@ def main() -> None:
     sfql = SFQL(TabularSF(**CONFIG_PARAMS["tabular_sf"]), **CONFIG_PARAMS["agent"])
     ql = QL(**CONFIG_PARAMS["ql"], **CONFIG_PARAMS["agent"])
     agents = [constrained_ql, sfql, ql]
-    agents = [constrained_ql, ql]
     names = ["ConstrainedQL", "SFQL", "QL"]
-    names = ["ConstrainedQL", "QL"]
 
     # train
     data_task_return = [utils.MeanVar() for _ in agents]
@@ -28,8 +26,8 @@ def main() -> None:
         # train each agent on a set of tasks
         for agent in agents:
             agent.reset()
-        for _ in range(n_tasks):
-            task = utils.generate_four_rooms(CONFIG_PARAMS["env"]["maze"])
+        for i in range(n_tasks):
+            task = utils.generate_four_rooms(CONFIG_PARAMS["env"]["maze"], i)
             for agent, name in zip(agents, names):
                 print("\ntrial {}, solving with {}".format(trial, name))
                 agent.train_on_task(task, n_samples)

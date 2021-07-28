@@ -1,10 +1,16 @@
 import numpy as np
 import configparser
-from four_rooms import Gridworld
 from ast import literal_eval
 import matplotlib.pyplot as plt
 import os
+import logging
 
+from four_rooms import Gridworld
+
+LOGGER = logging.getLogger()
+handler = logging.FileHandler('training.log')
+LOGGER.addHandler(handler)
+LOGGER.setLevel(logging.INFO)
 
 def read_config(config_path: str) -> dict:
     parser = configparser.RawConfigParser()
@@ -18,10 +24,12 @@ def read_config(config_path: str) -> dict:
     return config
 
 
-def generate_four_rooms(maze: list) -> Gridworld:
+def generate_four_rooms(maze: list, seed_val: int) -> Gridworld:
+    np.random.seed(seed_val)
     rewards = dict(
         zip(["1", "2", "3"], list(np.random.uniform(low=-1.0, high=1.0, size=3)))
     )
+    np.random.seed(seed_val)
     obstacles = dict(
         zip(["A", "B", "C"], list(np.random.uniform(low=1.0, high=2.0, size=3)))
     )
@@ -40,7 +48,6 @@ def plot_mean_var(
     # plot the task return
     ticksize = 14
     textsize = 18
-    figsize = (20, 10)
 
     plt.rc("font", size=textsize)  # controls default text sizes
     plt.rc("axes", titlesize=textsize)  # fontsize of the axes title
@@ -87,4 +94,4 @@ class MeanVar:
         return self.m2 / (self.count - 1)
 
     def calculate_standard_error(self) -> float:
-        return np.sqrt(self.compute_sample_variance() / float(self.count))
+        return np.sqrt(self.compute_sample_variance() / self.count)
