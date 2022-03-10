@@ -48,27 +48,30 @@ class Gridworld:
 
         reward_types = sorted(list(rewards.keys()))
         obstacle_types = sorted(list(obstacles.keys()))
+        # Type index map, len equals to number of types
         self.rewards_index = dict(zip(reward_types, range(len(reward_types))))
         self.obstacles_index = dict(zip(obstacle_types, range(len(obstacle_types))))
 
         self.goal = None
+        # TO DO: List might not be neccessary, start and end locations are in pairs
         self.initial = []
         self.occupied = set()
+        # Index for each reward/obstacle, len equals to total number of rewards/obstacles
         self.reward_ids = dict()
         self.obstacle_ids = dict()
-        for c in range(self.width):
-            for r in range(self.height):
-                if maze[r, c] == "G":
-                    self.goal = (r, c)
-                elif maze[r, c] == "_":
-                    self.initial.append((r, c))
-                elif maze[r, c] == "X":
-                    self.occupied.add((r, c))
-                elif maze[r, c].isnumeric():
-                    self.reward_ids[(r, c)] = len(self.reward_ids)
-                elif maze[r, c].isalpha():
+        for col in range(self.width):
+            for row in range(self.height):
+                if maze[row, col] == "G":
+                    self.goal = (row, col)
+                elif maze[row, col] == "_":
+                    self.initial.append((row, col))
+                elif maze[row, col] == "X":
+                    self.occupied.add((row, col))
+                elif maze[row, col].isnumeric():
+                    self.reward_ids[(row, col)] = len(self.reward_ids)
+                elif maze[row, col].isalpha():
                     # Since "G" and "X" are already checked, no need to exclude them
-                    self.obstacle_ids[(r, c)] = len(self.obstacle_ids)
+                    self.obstacle_ids[(row, col)] = len(self.obstacle_ids)        
 
     def clone(self):
         """
@@ -235,8 +238,8 @@ class Gridworld:
         The successor representation." Neural Computation 5.4 (1993): 613-624.
         """
         s_next = next_state[0]
-        nc = len(self.obstacles_index)
-        phi = np.zeros((nc,))
+        num_cost = len(self.obstacles_index)
+        phi = np.zeros((num_cost,))
         if s_next in self.obstacle_ids:
             row, col = s_next
             obstacle_index = self.obstacles_index[self.maze[row, col]]
@@ -263,13 +266,13 @@ class Gridworld:
         -------
         np.ndarray : a linear parameterization of the cost function of the current MDP
         """
-        ns = len(self.obstacles_index)
-        w = np.zeros((ns, 1))
+        num_cost = len(self.obstacles_index)
+        w = np.zeros((num_cost, 1))
         for obstacle_type, obstacle_index in self.obstacles_index.items():
             w[obstacle_index, 0] = self.obstacles[obstacle_type]
         return w
 
-    def features(self, state, next_state):
+    def features(self, state, action, next_state):
         """
         Computes the state features for the current environment, used for learning successor
         feature representations. First introduced in [1].
@@ -292,17 +295,16 @@ class Gridworld:
         [1] Dayan, Peter. "Improving generalization for temporal difference learning: 
         The successor representation." Neural Computation 5.4 (1993): 613-624.
         """
-        s1, _ = next_state
-        _, collected = state
-        nc = len(self.rewards_index)
-        phi = np.zeros((nc + 1,))
-        if s1 in self.reward_ids:
-            if collected[self.reward_ids[s1]] != 1:
-                y, x = s1
-                shape_index = self.rewards_index[self.maze[y, x]]
-                phi[shape_index] = 1
+        s1 = next_state[0]
+        collected = state[1]
+        num_reward = len(self.rewards_index)
+        phi = np.zeros((num_reward + 1,))
+        if s1 in self.reward_ids and collected[self.reward_ids[s1]] != 1:
+            y, x = s1
+            shape_index = self.rewards_index[self.maze[y, x]]
+            phi[shape_index] = 1
         elif s1 == self.goal:
-            phi[nc] = 1
+            phi[num_reward] = 1
         return phi
     
     def feature_dim(self):
@@ -325,9 +327,9 @@ class Gridworld:
         -------
         np.ndarray : a linear parameterization of the reward function of the current MDP
         """
-        ns = len(self.rewards_index)
-        w = np.zeros((ns + 1, 1))
+        num_reward = len(self.rewards_index)
+        w = np.zeros((num_reward + 1, 1))
         for reward_type, reward_index in self.rewards_index.items():
             w[reward_index, 0] = self.rewards[reward_type]
-        w[ns, 0] = 1.
+        w[num_reward, 0] = 1
         return w

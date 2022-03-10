@@ -27,7 +27,7 @@ def read_config(config_path: str) -> dict:
 def generate_four_rooms(maze: list, seed_val: int) -> Gridworld:
     np.random.seed(seed_val)
     rewards = dict(
-        zip(["1", "2", "3"], list(np.random.uniform(low=-1.0, high=1.0, size=3)))
+        zip(["1", "2", "3"], list(np.random.uniform(low=0.0, high=2.0, size=3)))
     )
     np.random.seed(seed_val)
     obstacles = dict(

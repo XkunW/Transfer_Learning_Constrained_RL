@@ -9,9 +9,6 @@ class Agent(ABC):
         gamma,
         T,
         encoding=lambda s: s,
-        epsilon=0.1,
-        epsilon_decay=1.0,
-        epsilon_min=0.0,
         print_ev=1000,
         save_ev=100,
     ):
@@ -26,12 +23,6 @@ class Agent(ABC):
             the maximum length of an episode
         encoding : function
             encodes the state of the task instance into a numpy array
-        epsilon : float
-            the initial exploration parameter for epsilon greedy (defaults to 0.1)
-        epsilon_decay : float
-            the amount to anneal epsilon in each time step (defaults to 1, no annealing)
-        epsilon_min : float
-            the minimum allowed value of epsilon (defaults to 0)
         print_ev : integer
             how often to print learning progress
         save_ev :
@@ -40,14 +31,11 @@ class Agent(ABC):
         self.gamma = gamma
         self.T = T
         self.encoding = encoding 
-        self.epsilon_init = epsilon
-        self.epsilon_decay = epsilon_decay
-        self.epsilon_min = epsilon_min
         self.print_ev = print_ev
         self.save_ev = save_ev
 
     @abstractmethod
-    def get_Q_values(self, s, s_enc):
+    def get_Q_values(self, s, s_enc=None):
         """
         Returns the value function evaluated in the specified state.
         An array of size [n_batch, n_actions], where:
@@ -141,8 +129,8 @@ class Agent(ABC):
         self.s_enc = None
         self.new_episode = True
         self.episode = 0
-        self.episode_reward = 0
-        self.episode_cost = 0
+        self.prev_episode_reward = 0
+        self.prev_episode_cost = 0
         self.steps_since_last_episode = 0
         self.reward_since_last_episode = 0
         self.cost_since_last_episode = 0
@@ -186,7 +174,7 @@ class Agent(ABC):
             )
         )
         reward_cost_str = "ep_reward \t {:.4f} \t reward \t {:.4f} ep_cost \t {:.4f} \t cost \t {:.4f}".format(
-            self.episode_reward, self.reward, self.episode_cost, self.cost
+            self.prev_episode_reward, self.reward, self.prev_episode_cost, self.cost
         )
         return sample_str, reward_cost_str
 
@@ -207,20 +195,11 @@ class Agent(ABC):
         """
         return self.active_task.transition(a)
 
-    def next_sample(self, viewer=None, n_view_ev=None):
+    def next_sample(self):
         """
         Updates the agent by performing one interaction with the current training environment.
         This function performs all interactions with the environment, data and storage manipulations,
         training the agent, and updating all history.
-
-        Parameters
-        ----------
-        viewer : object
-            a viewer that displays the agent's exploration behavior on the task based on its update() method
-            (defaults to None)
-        n_view_ev : integer
-            how often (in training episodes) to invoke the viewer to display agent's learned behavior
-            (defaults to None)
         """
 
         # start a new episode
@@ -230,13 +209,13 @@ class Agent(ABC):
             self.new_episode = False
             self.episode += 1
             self.steps_since_last_episode = 0
-            self.episode_reward = self.reward_since_last_episode
-            self.episode_cost = self.cost_since_last_episode
+            self.prev_episode_reward = self.reward_since_last_episode
+            self.prev_episode_cost = self.cost_since_last_episode
             self.reward_since_last_episode = 0
             self.cost_since_last_episode = 0
             if self.episode > 1:
-                self.episode_reward_hist.append(self.episode_reward)
-                self.episode_cost_hist.append(self.episode_cost)
+                self.episode_reward_hist.append(self.prev_episode_reward)
+                self.episode_cost_hist.append(self.prev_episode_cost)
 
         # pick an action to take
         a = self.pick_action()
@@ -274,15 +253,11 @@ class Agent(ABC):
             self.cost_hist.append(self.cost)
             self.cumulative_cost_hist.append(self.cumulative_cost)
 
-        # viewing
-        if viewer and self.episode % n_view_ev == 0:
-            viewer.update()
-
         # printing
         if self.steps % self.print_ev == 0:
             print("\t".join(self.get_progress_strings()))
 
-    def train_on_task(self, train_task, n_samples, viewer=None, n_view_ev=None):
+    def train_on_task(self, train_task, n_samples):
         """
         Trains the agent on the current task.
 
@@ -292,14 +267,8 @@ class Agent(ABC):
             the training task instance
         n_samples : integer
             how many samples should be generated and used to train the agent
-        viewer : object
-            a viewer that displays the agent's exploration behavior on the task based on its update() method
-            (defaults to None)
-        n_view_ev : integer
-            how often (in training episodes) to invoke the viewer to display agent's learned behavior
-            (defaults to None)
         """
         self.add_training_task(train_task)
         self.set_active_training_task()
         for _ in range(n_samples):
-            self.next_sample(viewer, n_view_ev)
+            self.next_sample()

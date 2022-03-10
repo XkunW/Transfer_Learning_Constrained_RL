@@ -1,14 +1,25 @@
+import sys
 from collections import defaultdict
-import numpy as np
 import random
 from copy import deepcopy
 
+import numpy as np
+
 from agents.agent import Agent
-from util import LOGGER
+from utils import LOGGER
 
 
 class ConstrainedQL(Agent):
-    def __init__(self, learning_rate, threshold, *args, **kwargs):
+    def __init__(
+        self, 
+        learning_rate, 
+        threshold,
+        epsilon=0.1,
+        epsilon_decay=1.0,
+        epsilon_min=0.0, 
+        *args, 
+        **kwargs
+    ):
         """
         Creates a new tabular Q-learning agent.
 
@@ -16,10 +27,21 @@ class ConstrainedQL(Agent):
         ----------
         learning_rate : float
             the learning rate to use in order to update Q-values
+        threshold: float
+            the one step cost threshold
+        epsilon : float
+            the initial exploration parameter for epsilon greedy (defaults to 0.1)
+        epsilon_decay : float
+            the amount to anneal epsilon in each time step (defaults to 1, no annealing)
+        epsilon_min : float
+            the minimum allowed value of epsilon (defaults to 0)
         """
-        super(ConstrainedQL, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.alpha = learning_rate
         self.threshold = threshold
+        self.epsilon_init = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
 
     def get_Q_values(self, s, s_enc):
         return self.Q[s]
@@ -61,11 +83,11 @@ class ConstrainedQL(Agent):
 
         # sample from a Bernoulli distribution with parameter epsilon
         if random.random() <= self.epsilon:
-            if safe_actions:
-                a = random.choice(safe_actions)
-            else:
-                LOGGER.warning("No state should have 4 unsafe actions, check your maze config or action prune logic!")
-                a = random.choice(range(self.n_actions))
+            if not safe_actions:
+                error_message = "A state should not have all actions labelled as unsafe, check config or action prune logic!"
+                LOGGER.error(error_message)
+                sys.exit(1)
+            a = random.choice(safe_actions)
         else:
             a = np.argmax(tuple(q_dict.values()))
 
