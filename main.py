@@ -1,5 +1,6 @@
 from agents.constrained_ql_agent import ConstrainedQL
 from agents.trajectory_constrained_ql_agent import TrajectoryConstrainedQL
+from agents.trajectory_constrained_ql_agent_v2 import TrajectoryConstrainedQLV2
 from agents.sfql_agent import SFQL
 from agents.ql_agent import QL
 from successor_features.tabular_sf import TabularSF
@@ -13,11 +14,13 @@ def main() -> None:
     # agents
     constrained_ql = ConstrainedQL(**CONFIG_PARAMS["constrained_ql"], **CONFIG_PARAMS["agent"])
     trajectory_constrained_ql = TrajectoryConstrainedQL(**CONFIG_PARAMS["trajectory_constrained_ql"], **CONFIG_PARAMS["agent"])
+    trajectory_constrained_ql_v2 = TrajectoryConstrainedQLV2(**CONFIG_PARAMS["trajectory_constrained_ql_v2"], **CONFIG_PARAMS["agent"])
     sfql = SFQL(TabularSF(**CONFIG_PARAMS["tabular_sf"]), **CONFIG_PARAMS["sfql"], **CONFIG_PARAMS["agent"])
     ql = QL(**CONFIG_PARAMS["ql"], **CONFIG_PARAMS["agent"])
     agents = {
         "ConstrainedQL": constrained_ql, 
         "TrajectoryConstrainedQL": trajectory_constrained_ql,
+        "TrajectoryConstrainedQLV2": trajectory_constrained_ql_v2,
         "SFQL": sfql,
         "QL": ql,
     }
