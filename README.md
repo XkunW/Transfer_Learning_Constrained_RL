@@ -47,47 +47,4 @@ The current four rooms setup contains 3 types of rewards and 3 types of obstacle
 Below is the pseudo code for the Safety Feature Q Learning algorithm
 
 ### Algorithm
-#### **Safety Features**
-$c(s, a, s') = {\phi}_c(s, a, s')^{\intercal} w_c\\$ 
-
-$J^{\pi}(s, a) = E^{\pi} \left[c_{t+1} + {\gamma} c_{t+2} + ...| S_t = s, A_t = a\right] \\$
-&emsp;&emsp;&emsp;&emsp; $= E^{\pi} \left[{\phi}_{c_{t+1}}^\intercal w_c + {\gamma} {\phi}_{c_{t+2}}^\intercal w_c + ...| S_t = s, A_t = a\right] \\$
-&emsp;&emsp;&emsp;&emsp; $= E^{\pi} \left[{\sum}_{i=t}^{\infty} {\gamma}^{i-t}{\phi}_{c_{i+1}} | S_t = s, A_t = a\right]^{\intercal} w_c \\$
-&emsp;&emsp;&emsp;&emsp; $= {\psi}_c^{\pi}(s, a)^{\intercal} w_c \\$
-
-${\psi}_c^{\pi}(s, a) = {\phi}_{c_{t+1}} + {\gamma}E^{\pi} \left[{\psi}_c^{\pi}(S_{t+1}, {\pi}(S_{t+1}))|S_t = s, A_t = a\right]\\$
-
-#### **Safe Generalized Policy Improvement (GPI)**
-$
-Q^{All \pi}(s) = {\psi}^{All \pi}(s)^\intercal * w'\\ 
-J^{All \pi}(s) = {\psi}_c^{All \pi}(s)^\intercal * w'_c\\
-$
-$Q^{{\pi}_{safe}}(s) =$ Assign negative $Q$ values to all ${{\pi}_i}(a)$ where $J^{{\pi}_i}(s, a)$ + current cost < threshold $\\$
-${\pi_{src}} = argmax_{\pi_i}(max_a(Q^{{\pi}_{safe}}(s)))\\$
-
-return $Q^{\pi_{src}}(s)$, $J^{\pi_{src}}(s)$
-
-#### **Safe Generalized Policy Evaluation (GPE)**
-$
-Q^{\pi_{curr}}(s) = {\psi}^{\pi_{curr}}(s)^\intercal * w'\\ 
-J^{\pi_{curr}}(s) = {\psi}_c^{\pi_{curr}}(s)^\intercal * w'_c\\
-$
-$Q_{safe}(s) =$ Assign negative $Q$ values to all actions $a$ where $J^{{\pi}_curr}(s, a)$ + current cost < threshold $\\$
-$a' = argmax(Q_{safe}(s))\\$
-return $a'\\$
-
-#### **Training**
-For each sample:\
-&emsp; $Q^{\pi_{src}}(s)$, $J^{\pi_{src}}(s)$ = Safe GPI($s$)\
-&emsp; $a$ = Epsilon Greedy($Q^{\pi_{src}}(s)$)\
-&emsp; $s', r, c$ = State Transition($s, a$)\
-&emsp; Update Reward Weight($\phi$, $r$, current task index)\
-&emsp; Update Cost Weight($\phi_c$, $c$, current task index)\
-&emsp; $Q^{\pi_{src'}}(s')$, $J^{\pi_{src'}}(s')$ = Safe GPI($s'$)\
-&emsp; $a'$ = $argmax(Q^{\pi_{src'}}(s'))$\
-&emsp; Update Successor Features($s, a, \phi, s', a', \gamma$, current_task_index)\
-&emsp; Update Safety Features($s, a, \phi_c, s', a', \gamma$, current_task_index)\
-&emsp; If current_task_index != $src$:\
-&emsp;&emsp; $a'$ = Safe GPE($s', src$)\
-&emsp;&emsp; Update Successor Features($s, a, \phi, s', a', \gamma, src$)\
-&emsp;&emsp; Update Safety Features($s, a, \phi_c, s', a', \gamma, src$)
+![Alt text](/Pseudocode.png?raw=true)
