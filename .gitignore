@@ -2,10 +2,13 @@
 .DS_Store
 
 # Log files
-training.log
+log/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
 # Output files
-Figures/
+figures/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
